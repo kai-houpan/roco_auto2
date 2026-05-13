@@ -30,6 +30,7 @@ class Automator:
         self.win_y = 0
         self.cycle_count = 0
         self._window_lost_count = 0
+        self._poll_count = 0
 
     # ------------------------------------------------------------------
     # Public API
@@ -57,6 +58,7 @@ class Automator:
             self.cycle_count = 0
             while not self._stop_event.is_set():
                 self.cycle_count += 1
+                self._poll_count = 0
                 self.log("START", f"第 {self.cycle_count} 轮循环开始")
 
                 if not self._check_window():
@@ -243,6 +245,7 @@ class Automator:
             return "stop"
         pos = match_template("finished_selected.png", DIAGRAM_DIR, self._win_region())
         if pos is not None:
+            self._poll_count = 0
             self.log("OK", "检测到孵化完成 (finished_selected)")
             self.log("ACT", f"点击 finished_selected @ ({pos[0]}, {pos[1]})")
             click(pos[0], pos[1])
@@ -354,6 +357,7 @@ class Automator:
             return "stop"
         pos = match_template("finished_notselected.png", DIAGRAM_DIR, self._win_region())
         if pos is not None:
+            self._poll_count = 0
             self.log("OK", "检测到未选中完成 (finished_notselected)")
             self.log("ACT", f"点击 finished_notselected @ ({pos[0]}, {pos[1]})")
             click(pos[0], pos[1])
@@ -363,5 +367,8 @@ class Automator:
                 return self._state_8()
             self.log("FAIL", "验证 finished_selected 失败，重试")
             return self._state_12()
+        self._poll_count += 1
+        if self._poll_count % 20 == 0:
+            self.log("ACT", f"等待孵化中... (已轮询 {self._poll_count} 次)")
         time.sleep(POLL_INTERVAL)
         return self._state_7()

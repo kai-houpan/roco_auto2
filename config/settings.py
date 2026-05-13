@@ -19,6 +19,7 @@ GAME_WINDOW_H = 938
 
 # ---- Template Matching ----
 MATCH_THRESHOLD = 0.8
+WINDOW_MATCH_THRESHOLD = 0.7
 
 # ---- Timing (seconds) ----
 CLICK_WAIT = 1.0

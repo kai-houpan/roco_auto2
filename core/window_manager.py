@@ -1,10 +1,11 @@
-from config.settings import DIAGRAM_DIR, GAME_WINDOW_W, GAME_WINDOW_H
+from config.settings import DIAGRAM_DIR, GAME_WINDOW_W, GAME_WINDOW_H, WINDOW_MATCH_THRESHOLD
 from core.recognizer import match_template
 
 
 def locate_window() -> tuple[int, int] | None:
     """Find the game window. Returns (top_left_x, top_left_y) or None."""
-    result = match_template("window.png", DIAGRAM_DIR)
+    result = match_template("window.png", DIAGRAM_DIR,
+                            threshold=WINDOW_MATCH_THRESHOLD)
     if result is None:
         return None
     # match_template returns center; convert to top-left

@@ -15,23 +15,22 @@ class LogPanel(ttk.Frame):
 
         self.text = scrolledtext.ScrolledText(
             self, wrap=tk.WORD, state="disabled",
-            bg="#1E1E1E", fg="#BBBBBB",
-            insertbackground="#BBBBBB",
-            font=("Consolas", 10)
+            bg="white", fg="black",
+            insertbackground="black"
         )
         self.text.pack(fill=tk.BOTH, expand=True)
 
         self._tag_configure()
 
     def _tag_configure(self):
-        self.text.tag_config("START", foreground="#A9B7C6")
-        self.text.tag_config("OK", foreground="#6A8759")
-        self.text.tag_config("FAIL", foreground="#CC7832")
-        self.text.tag_config("ACT", foreground="#6897BB")
-        self.text.tag_config("SCROLL", foreground="#6897BB")
-        self.text.tag_config("WARN", foreground="#BBB529")
-        self.text.tag_config("ERROR", foreground="#FF6B68")
-        self.text.tag_config("STOP", foreground="#CC7832")
+        self.text.tag_config("START", foreground="#3C5A7D")
+        self.text.tag_config("OK", foreground="#2D6A2D")
+        self.text.tag_config("FAIL", foreground="#B5451A")
+        self.text.tag_config("ACT", foreground="#20548B")
+        self.text.tag_config("SCROLL", foreground="#20548B")
+        self.text.tag_config("WARN", foreground="#8B7500")
+        self.text.tag_config("ERROR", foreground="#CC2200")
+        self.text.tag_config("STOP", foreground="#B5451A")
 
     def _write(self, level: str, message: str):
         ts = datetime.now().strftime("%H:%M:%S.%f")[:12]

@@ -13,10 +13,11 @@ class App:
     def __init__(self):
         self.root = tk.Tk()
         self.root.title("洛克王国自动孵蛋工具")
-        self.root.geometry("700x600")
-        self.root.configure(bg="#2B2B2B")
-        self.root.minsize(500, 400)
+        self.root.geometry("500x650")
+        self.root.configure(bg="white")
+        self.root.minsize(400, 500)
 
+        self.ACCENT = "#112DA5"  # rgb(17, 45, 165)
         self._style()
         self._load_dictionaries()
         self._create_widgets()
@@ -27,16 +28,27 @@ class App:
     def _style(self):
         style = ttk.Style()
         style.theme_use("clam")
-        style.configure(".", background="#2B2B2B", foreground="#BBBBBB",
-                         fieldbackground="#3C3F41")
-        style.configure("TLabel", background="#2B2B2B", foreground="#BBBBBB")
-        style.configure("TFrame", background="#2B2B2B")
-        style.configure("TButton", background="#3C3F41", foreground="#BBBBBB")
+
+        style.configure(".", background="white", foreground="black",
+                         fieldbackground="white")
+        style.configure("TLabel", background="white", foreground="black")
+        style.configure("TFrame", background="white")
+
+        # Buttons — white with visible border
+        style.configure("TButton", background="white", foreground="black",
+                         borderwidth=2, relief="raised")
         style.map("TButton",
-                  background=[("active", "#4A4D50"), ("disabled", "#333333")])
+                  background=[("active", "#E8E8E8"), ("disabled", "#F5F5F5")],
+                  relief=[("pressed", "sunken")])
+
+        # Combobox
         style.configure("TCombobox",
-                        fieldbackground="#3C3F41", background="#3C3F41",
-                        foreground="#BBBBBB", arrowcolor="#BBBBBB")
+                        fieldbackground="white", background="white",
+                        foreground="black", arrowcolor=self.ACCENT)
+        style.map("TCombobox",
+                  fieldbackground=[("readonly", "white")],
+                  selectbackground=[("readonly", self.ACCENT)],
+                  selectforeground=[("readonly", "white")])
 
     def _load_dictionaries(self):
         try:
@@ -65,8 +77,7 @@ class App:
         self.log_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
 
         # Footer
-        footer = ttk.Label(self.root, text="日志文件: logs/",
-                           font=("", 8))
+        footer = ttk.Label(self.root, text="日志文件: logs/")
         footer.pack(side=tk.BOTTOM, pady=(0, 4))
 
     # ------------------------------------------------------------------
