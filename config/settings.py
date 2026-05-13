@@ -33,6 +33,10 @@ MAX_SCROLL_RETRIES = 10
 MAX_WINDOW_LOST_CHECKS = 5
 MAX_ANIMATION_RETRIES = 3
 
+# ---- Interception Driver ----
+WHEEL_DELTA = 120          # Windows 标准：每个滚轮齿 = 120
+MOVE_DELAY = 0.02          # Interception 移动后到点击前的微延迟
+
 # ---- Scroll ----
 SCROLL_REL_X = 1160
 SCROLL_REL_Y = 500

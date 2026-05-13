@@ -19,6 +19,7 @@ Thumbs.db
 
 # Project specific
 logs/*.log
+interception.dll
 
 # Sensitive
 .env

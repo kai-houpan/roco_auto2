@@ -65,6 +65,10 @@ class Automator:
                 result = self._state_2()
                 if result == "stop":
                     return
+        except Exception as e:
+            self.log("ERROR", f"未捕获异常: {e}")
+            import traceback
+            self.log("ERROR", traceback.format_exc())
         finally:
             self.log("STOP", "工作流结束")
             self.on_stopped()
