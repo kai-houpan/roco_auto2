@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
 
+from ui.rounded_button import RoundedButton
+
 
 class ControlPanel(ttk.Frame):
     def __init__(self, parent, egg_names: list[str], gulu_names: list[str],
-                 config_names: list[str], on_start, on_stop, on_test, on_config_change):
-        super().__init__(parent)
+                 config_names: list[str], on_start, on_stop, on_test,
+                 on_config_change, accent: str = "#112DA5"):
+        super().__init__(parent, style="Gray.TFrame")
         self.egg_names = egg_names
         self.gulu_names = gulu_names
         self.config_names = config_names
@@ -14,12 +17,12 @@ class ControlPanel(ttk.Frame):
         self._on_test = on_test
         self._on_config_change = on_config_change
         self._running = False
-        self.ACCENT = "#112DA5"
+        self.ACCENT = accent
         self._create_widgets()
 
     def _create_widgets(self):
         # ---- Screen config ----
-        ttk.Label(self, text="屏幕设置:").grid(
+        ttk.Label(self, text="屏幕设置:", background="#F5F6FA").grid(
             row=0, column=0, sticky="w", padx=4, pady=(6, 2))
         self.config_var = tk.StringVar(value=self.config_names[0] if self.config_names else "")
         self.config_combo = ttk.Combobox(
@@ -28,10 +31,10 @@ class ControlPanel(ttk.Frame):
         self.config_combo.bind("<<ComboboxSelected>>", self._on_config_selected)
 
         # ---- Egg selection ----
-        ttk.Label(self, text="选择目标蛋:").grid(
+        ttk.Label(self, text="选择目标蛋:", background="#F5F6FA").grid(
             row=2, column=0, sticky="w", padx=4, pady=(6, 2))
 
-        egg_frame = ttk.Frame(self)
+        egg_frame = ttk.Frame(self, style="Gray.TFrame")
         egg_frame.grid(row=3, column=0, sticky="ew", padx=4, pady=(0, 4))
         egg_frame.columnconfigure(0, weight=1)
 
@@ -40,12 +43,13 @@ class ControlPanel(ttk.Frame):
             egg_frame, textvariable=self.egg_var, values=self.egg_names, state="readonly")
         self.egg_combo.grid(row=0, column=0, sticky="ew")
 
-        self.add_btn = ttk.Button(egg_frame, text="＋ 加入队列",
-                                  command=self._on_add_to_queue)
+        self.add_btn = RoundedButton(egg_frame, text="＋加入队列",
+                                     command=self._on_add_to_queue,
+                                     accent=self.ACCENT, font=("", 8))
         self.add_btn.grid(row=0, column=1, padx=(4, 0))
 
         # ---- Queue ----
-        ttk.Label(self, text="任务队列:").grid(
+        ttk.Label(self, text="任务队列:", background="#F5F6FA").grid(
             row=4, column=0, sticky="w", padx=4, pady=(4, 2))
 
         self.queue_listbox = tk.Listbox(
@@ -54,23 +58,26 @@ class ControlPanel(ttk.Frame):
             activestyle="none", exportselection=False)
         self.queue_listbox.grid(row=5, column=0, sticky="ew", padx=4, pady=(0, 2))
 
-        queue_btn_frame = ttk.Frame(self)
+        queue_btn_frame = ttk.Frame(self, style="Gray.TFrame")
         queue_btn_frame.grid(row=6, column=0, sticky="w", padx=4, pady=(0, 4))
 
-        self.remove_btn = ttk.Button(queue_btn_frame, text="移除",
-                                     command=self._on_remove_from_queue)
+        self.remove_btn = RoundedButton(queue_btn_frame, text="移除",
+                                        command=self._on_remove_from_queue,
+                                        accent=self.ACCENT, font=("", 8))
         self.remove_btn.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.up_btn = ttk.Button(queue_btn_frame, text="▲ 上移",
-                                 command=self._on_move_up)
+        self.up_btn = RoundedButton(queue_btn_frame, text="▲ 上移",
+                                    command=self._on_move_up,
+                                    accent=self.ACCENT, font=("", 8))
         self.up_btn.pack(side=tk.LEFT, padx=(0, 4))
 
-        self.down_btn = ttk.Button(queue_btn_frame, text="▼ 下移",
-                                   command=self._on_move_down)
+        self.down_btn = RoundedButton(queue_btn_frame, text="▼ 下移",
+                                      command=self._on_move_down,
+                                      accent=self.ACCENT, font=("", 8))
         self.down_btn.pack(side=tk.LEFT)
 
         # ---- Gulu selection ----
-        ttk.Label(self, text="选择咕噜球:").grid(
+        ttk.Label(self, text="选择咕噜球:", background="#F5F6FA").grid(
             row=7, column=0, sticky="w", padx=4, pady=(6, 2))
         self.gulu_var = tk.StringVar(value=self.gulu_names[0] if self.gulu_names else "")
         self.gulu_combo = ttk.Combobox(
@@ -78,27 +85,33 @@ class ControlPanel(ttk.Frame):
         self.gulu_combo.grid(row=8, column=0, sticky="ew", padx=4, pady=(0, 4))
 
         # ---- Buttons ----
-        btn_frame = ttk.Frame(self)
+        btn_frame = ttk.Frame(self, style="Gray.TFrame")
         btn_frame.grid(row=9, column=0, pady=(8, 4))
 
-        self.start_btn = ttk.Button(btn_frame, text="▶ 启动", command=self._do_start)
+        self.start_btn = RoundedButton(btn_frame, text="▶ 启动",
+                                       command=self._do_start,
+                                       accent=self.ACCENT, font=("", 10, "bold"))
         self.start_btn.pack(side=tk.LEFT, padx=4)
 
-        self.stop_btn = ttk.Button(btn_frame, text="⏹ 停止", command=self._do_stop)
+        self.stop_btn = RoundedButton(btn_frame, text="⏹ 停止",
+                                      command=self._do_stop,
+                                      accent=self.ACCENT, font=("", 10, "bold"))
         self.stop_btn.pack(side=tk.LEFT, padx=4)
-        self.stop_btn.configure(state="disabled")
+        self.stop_btn.set_enabled(False)
 
-        self.test_btn = ttk.Button(btn_frame, text="🔍 测试匹配", command=self._on_test)
+        self.test_btn = RoundedButton(btn_frame, text="🔍 测试匹配",
+                                      command=self._on_test,
+                                      accent=self.ACCENT, font=("", 8))
         self.test_btn.pack(side=tk.LEFT, padx=4)
 
         # ---- Status ----
         self.status_var = tk.StringVar(value="● 已停止")
-        ttk.Label(self, textvariable=self.status_var).grid(
+        ttk.Label(self, textvariable=self.status_var, background="#F5F6FA").grid(
             row=10, column=0, sticky="w", padx=4, pady=(6, 2))
 
         # ---- Cycle count ----
         self.cycle_var = tk.StringVar(value="循环次数: 0")
-        ttk.Label(self, textvariable=self.cycle_var).grid(
+        ttk.Label(self, textvariable=self.cycle_var, background="#F5F6FA").grid(
             row=11, column=0, sticky="w", padx=4)
 
         # ---- Post-workflow options ----
@@ -180,21 +193,23 @@ class ControlPanel(ttk.Frame):
 
     def set_running(self, running: bool):
         self._running = running
-        state_btn = "disabled" if running else "normal"
+        enabled = not running
         state_combo = "disabled" if running else "readonly"
 
-        self.start_btn.configure(state=state_btn)
-        self.stop_btn.configure(state="normal" if running else "disabled")
-        self.test_btn.configure(state=state_btn)
+        self.start_btn.set_enabled(enabled)
+        self.stop_btn.set_enabled(running)
+        self.test_btn.set_enabled(enabled)
+        self.add_btn.set_enabled(enabled)
+        self.remove_btn.set_enabled(enabled)
+        self.up_btn.set_enabled(enabled)
+        self.down_btn.set_enabled(enabled)
+
         self.config_combo.configure(state=state_combo)
         self.egg_combo.configure(state=state_combo)
         self.gulu_combo.configure(state=state_combo)
-        self.add_btn.configure(state=state_btn)
-        self.remove_btn.configure(state=state_btn)
-        self.up_btn.configure(state=state_btn)
-        self.down_btn.configure(state=state_btn)
-        self.auto_close_cb.configure(state=state_btn)
-        self.auto_shutdown_cb.configure(state=state_btn)
+
+        self.auto_close_cb.configure(state="normal" if enabled else "disabled")
+        self.auto_shutdown_cb.configure(state="normal" if enabled else "disabled")
 
         self.status_var.set("● 运行中" if running else "● 已停止")
 
