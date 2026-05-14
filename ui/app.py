@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
+import time
+import threading
 
 from config.settings import EGGS_DICT_FILE, GULUS_DICT_FILE, EGGS_DIR, GULUS_DIR, LOGS_DIR
 from config.dictionary_loader import load_eggs, load_gulus, EggEntry, GuluEntry
@@ -162,6 +164,30 @@ class App:
     def _handle_stopped(self):
         self.control.set_running(False)
         self._dump_log_to_file()
+        if self.control.auto_close_var.get():
+            threading.Thread(target=self._do_auto_close, daemon=True).start()
+        if self.control.auto_shutdown_var.get():
+            self._do_auto_shutdown()
+
+    def _do_auto_close(self):
+        from core.operator import click
+        from core.window_manager import locate_window
+        if self.automator is None:
+            return
+        wx, wy = self.automator.win_x, self.automator.win_y
+        cx, cy = wx + 1412, wy + 17
+        self._log("ACT", f"自动关闭游戏窗口: ({cx}, {cy})")
+        click(cx, cy)
+        for _ in range(30):
+            time.sleep(0.5)
+            if locate_window() is None:
+                self._log("OK", "游戏窗口已关闭")
+                return
+        self._log("WARN", "未能确认游戏窗口关闭")
+
+    def _do_auto_shutdown(self):
+        self._log("WARN", "系统将在 60 秒后关机，如需取消请运行: shutdown /a")
+        os.system("shutdown /s /t 60")
 
     def _dump_log_to_file(self):
         from datetime import datetime

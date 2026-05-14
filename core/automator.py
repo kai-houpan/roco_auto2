@@ -5,9 +5,11 @@ from config.settings import (
     DIAGRAM_DIR, EGGS_DIR, GULUS_DIR,
     GAME_WINDOW_W, GAME_WINDOW_H,
     POLL_INTERVAL, ANIMATION_POLL_INTERVAL, ANIMATION_TIMEOUT,
-    MAX_CLICK_RETRIES, MAX_SCROLL_RETRIES, MAX_WINDOW_LOST_CHECKS,
-    MAX_ANIMATION_RETRIES,
+    MAX_CLICK_RETRIES, MAX_SCROLL_RETRIES, MAX_SCROLL_RETRIES_EGG,
+    MAX_WINDOW_LOST_CHECKS, MAX_ANIMATION_RETRIES,
     SCROLL_REL_X, SCROLL_REL_Y, SCROLL_CLICKS,
+    MATCH_THRESHOLD_EGG,
+    DELAY_PUTIN_VERIFY, DELAY_SITE_VERIFY,
 )
 from config.dictionary_loader import EggEntry, GuluEntry
 from core.recognizer import match_template, match_template_in_window
@@ -182,19 +184,21 @@ class Automator:
     def _state_4(self) -> str | None:
         egg_img = self.egg.image
         egg_sel = self.egg.selected
-        for scroll_attempt in range(MAX_SCROLL_RETRIES):
+        for scroll_attempt in range(MAX_SCROLL_RETRIES_EGG):
             if self._stop_event.is_set():
                 return "stop"
             pos = match_template_in_window(
                 egg_img, EGGS_DIR,
-                self.win_x, self.win_y, GAME_WINDOW_W, GAME_WINDOW_H)
+                self.win_x, self.win_y, GAME_WINDOW_W, GAME_WINDOW_H,
+                threshold=MATCH_THRESHOLD_EGG)
             if pos is not None:
                 self.log("OK", f"找到蛋: {self.egg.name} ({egg_img})")
                 self.log("ACT", f"点击 {egg_img} @ ({pos[0]}, {pos[1]})")
                 click(pos[0], pos[1])
                 sel_pos = match_template_in_window(
                     egg_sel, EGGS_DIR,
-                    self.win_x, self.win_y, GAME_WINDOW_W, GAME_WINDOW_H)
+                    self.win_x, self.win_y, GAME_WINDOW_W, GAME_WINDOW_H,
+                    threshold=MATCH_THRESHOLD_EGG)
                 if sel_pos is not None:
                     self.log("OK", f"蛋已选中: {egg_sel}")
                     return self._state_5()
@@ -211,10 +215,22 @@ class Automator:
     # STATE_5 — Confirm put-in (putin_1 → takeout)
     # ------------------------------------------------------------------
     def _state_5(self) -> str | None:
-        if self._click_and_verify("putin_1.png", "takeout.png",
-                                   DIAGRAM_DIR, DIAGRAM_DIR):
-            self.log("OK", "蛋放入确认成功")
-            return self._state_2()
+        region = self._win_region()
+        for attempt in range(MAX_CLICK_RETRIES):
+            if self._stop_event.is_set():
+                return "stop"
+            pos = match_template("putin_1.png", DIAGRAM_DIR, region)
+            if pos is None:
+                self.log("FAIL", "未找到 putin_1.png")
+                return self._state_4()
+            self.log("ACT", f"点击 putin_1 @ ({pos[0]}, {pos[1]})")
+            click(pos[0], pos[1])
+            time.sleep(DELAY_PUTIN_VERIFY)
+            verify_pos = match_template("takeout.png", DIAGRAM_DIR, region)
+            if verify_pos is not None:
+                self.log("OK", "蛋放入确认成功")
+                return self._state_2()
+            self.log("FAIL", f"takeout 验证失败 (第{attempt + 1}/{MAX_CLICK_RETRIES}次)")
         self.log("FAIL", "putin_1 验证失败，回到选蛋")
         return self._state_4()
 
@@ -270,6 +286,8 @@ class Automator:
                 continue
 
             # Neither found — wait
+            if self._poll_count == 0:
+                self.log("ACT", "开始等待孵化中...")
             self._poll_count += 1
             if self._poll_count % 20 == 0:
                 self.log("ACT", f"等待孵化中... (已轮询 {self._poll_count} 次)")
@@ -359,6 +377,7 @@ class Automator:
             cy = self.win_y + 800
             self.log("ACT", f"点击固定位置 @ ({cx}, {cy})")
             click(cx, cy)
+            time.sleep(DELAY_SITE_VERIFY)
             verify_pos = match_template("site.png", DIAGRAM_DIR, self._win_region())
             if verify_pos is not None:
                 self.log("OK", "契约完成 (site 验证成功)")

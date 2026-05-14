@@ -1,3 +1,9 @@
 |蛋的名称|图像|检验图像|
 |神奇的蛋|shenqi_egg.png|shenqi_egg_selected.png|
 |奇丽草的蛋|qilicao_egg.png|qilicao_egg_selected.png|
+|治愈兔的蛋|zhiyutu_egg.png|zhiyutu_egg_selected.png|
+|大耳帽兜的蛋|daermaodou_egg.png|daermaodou_egg_selected.png|
+|拉特的蛋|late_egg.png|late_egg_selected.png|
+|呼呼猪的蛋|huhuzhu_egg.png|huhuzhu_egg_selected.png|
+|粉星仔的蛋|fenxingzai_egg.png|fenxingzai_egg_selected.png|
+|火红尾的蛋|huohongwei_egg.png|huohongwei_egg_selected.png|

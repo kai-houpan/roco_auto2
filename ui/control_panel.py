@@ -55,6 +55,17 @@ class ControlPanel(ttk.Frame):
         cycle_lbl = ttk.Label(self, textvariable=self.cycle_var)
         cycle_lbl.grid(row=6, column=0, sticky="w", padx=4)
 
+        # Post-workflow options
+        self.auto_close_var = tk.BooleanVar(value=False)
+        self.auto_close_cb = ttk.Checkbutton(
+            self, text="工作流结束后自动关闭游戏窗口", variable=self.auto_close_var)
+        self.auto_close_cb.grid(row=7, column=0, sticky="w", padx=4, pady=(8, 2))
+
+        self.auto_shutdown_var = tk.BooleanVar(value=False)
+        self.auto_shutdown_cb = ttk.Checkbutton(
+            self, text="工作流结束后自动关机", variable=self.auto_shutdown_var)
+        self.auto_shutdown_cb.grid(row=8, column=0, sticky="w", padx=4, pady=(0, 2))
+
         self.columnconfigure(0, weight=1)
 
     def _do_start(self):
@@ -71,6 +82,8 @@ class ControlPanel(ttk.Frame):
             self.test_btn.configure(state="disabled")
             self.egg_combo.configure(state="disabled")
             self.gulu_combo.configure(state="disabled")
+            self.auto_close_cb.configure(state="disabled")
+            self.auto_shutdown_cb.configure(state="disabled")
             self.status_var.set("● 运行中")
         else:
             self.start_btn.configure(state="normal")
@@ -78,6 +91,8 @@ class ControlPanel(ttk.Frame):
             self.test_btn.configure(state="normal")
             self.egg_combo.configure(state="readonly")
             self.gulu_combo.configure(state="readonly")
+            self.auto_close_cb.configure(state="normal")
+            self.auto_shutdown_cb.configure(state="normal")
             self.status_var.set("● 已停止")
 
     def set_cycle_count(self, n: int):
