@@ -1,7 +1,11 @@
 import os
+import sys
 
 # ---- Project root ----
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if getattr(sys, 'frozen', False):
+    ROOT = os.path.dirname(sys.executable)
+else:
+    ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOGS_DIR = os.path.join(ROOT, "logs")
 
 # ---- Active screen config (set by activate_config) ----

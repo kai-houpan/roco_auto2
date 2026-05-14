@@ -3,6 +3,7 @@ from tkinter import ttk, messagebox
 import os
 import time
 import threading
+import webbrowser
 
 from config import settings as _cfg
 from config.dictionary_loader import load_eggs, load_gulus, EggEntry, GuluEntry
@@ -76,13 +77,27 @@ class App:
             on_test=self._on_test_match, on_config_change=self._on_config_change)
         self.control.pack(fill=tk.X, padx=10, pady=(0, 6))
 
+        # Footer (pack before LogPanel so it claims space first)
+        footer_frame = ttk.Frame(self.root)
+        footer_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=10, pady=(0, 4))
+
+        credit_left = ttk.Label(footer_frame, text="本程序由 ")
+        credit_left.pack(side=tk.LEFT)
+
+        credit_name = tk.Label(
+            footer_frame, text="余耳Yure",
+            fg="#022DAC", font=("", 9), cursor="hand2",
+            background="white")
+        credit_name.pack(side=tk.LEFT)
+        credit_name.bind("<Button-1>",
+                         lambda e: webbrowser.open("https://space.bilibili.com/3546812698855825"))
+
+        credit_right = ttk.Label(footer_frame, text=" 开发  |  日志文件: logs/")
+        credit_right.pack(side=tk.LEFT)
+
         # Log panel
         self.log_panel = LogPanel(self.root)
         self.log_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
-
-        # Footer
-        footer = ttk.Label(self.root, text="日志文件: logs/")
-        footer.pack(side=tk.BOTTOM, pady=(0, 4))
 
     # ------------------------------------------------------------------
     # Thread-safe logging
