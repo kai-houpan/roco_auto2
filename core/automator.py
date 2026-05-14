@@ -238,23 +238,44 @@ class Automator:
         return self._state_7()
 
     # ------------------------------------------------------------------
-    # STATE_7 — Check finished (finished_selected)
+    # STATE_7 — Poll for hatching completion (iterative, no recursion)
     # ------------------------------------------------------------------
     def _state_7(self) -> str | None:
-        if self._stop_event.is_set():
-            return "stop"
-        pos = match_template("finished_selected.png", DIAGRAM_DIR, self._win_region())
-        if pos is not None:
-            self._poll_count = 0
-            self.log("OK", "检测到孵化完成 (finished_selected)")
-            self.log("ACT", f"点击 finished_selected @ ({pos[0]}, {pos[1]})")
-            click(pos[0], pos[1])
-            if self._click_and_verify("contract.png", "contract_wait.png",
-                                       DIAGRAM_DIR, DIAGRAM_DIR):
-                return self._state_8()
-            self.log("FAIL", "contract 验证失败，回到 STATE_7")
-            return self._state_7()
-        return self._state_12()
+        while not self._stop_event.is_set():
+            # Check finished_selected
+            pos = match_template("finished_selected.png", DIAGRAM_DIR, self._win_region())
+            if pos is not None:
+                self._poll_count = 0
+                self.log("OK", "检测到孵化完成 (finished_selected)")
+                self.log("ACT", f"点击 finished_selected @ ({pos[0]}, {pos[1]})")
+                click(pos[0], pos[1])
+                if self._click_and_verify("contract.png", "contract_wait.png",
+                                           DIAGRAM_DIR, DIAGRAM_DIR):
+                    return self._state_8()
+                self.log("FAIL", "contract 验证失败，继续轮询")
+                continue
+
+            # Check finished_notselected
+            pos = match_template("finished_notselected.png", DIAGRAM_DIR, self._win_region())
+            if pos is not None:
+                self._poll_count = 0
+                self.log("OK", "检测到未选中完成 (finished_notselected)")
+                self.log("ACT", f"点击 finished_notselected @ ({pos[0]}, {pos[1]})")
+                click(pos[0], pos[1])
+                verify = match_template("finished_selected.png", DIAGRAM_DIR, self._win_region())
+                if verify is not None:
+                    self.log("OK", "验证 finished_selected 成功")
+                    return self._state_8()
+                self.log("FAIL", "验证 finished_selected 失败，继续轮询")
+                continue
+
+            # Neither found — wait
+            self._poll_count += 1
+            if self._poll_count % 20 == 0:
+                self.log("ACT", f"等待孵化中... (已轮询 {self._poll_count} 次)")
+            time.sleep(POLL_INTERVAL)
+
+        return "stop"
 
     # ------------------------------------------------------------------
     # STATE_8 — Contract entry (contract)
@@ -349,26 +370,3 @@ class Automator:
         self.log("STOP", "click/site 验证失败 (重试耗尽)")
         return "stop"
 
-    # ------------------------------------------------------------------
-    # STATE_12 — Unselected finished (finished_notselected)
-    # ------------------------------------------------------------------
-    def _state_12(self) -> str | None:
-        if self._stop_event.is_set():
-            return "stop"
-        pos = match_template("finished_notselected.png", DIAGRAM_DIR, self._win_region())
-        if pos is not None:
-            self._poll_count = 0
-            self.log("OK", "检测到未选中完成 (finished_notselected)")
-            self.log("ACT", f"点击 finished_notselected @ ({pos[0]}, {pos[1]})")
-            click(pos[0], pos[1])
-            verify = match_template("finished_selected.png", DIAGRAM_DIR, self._win_region())
-            if verify is not None:
-                self.log("OK", "验证 finished_selected 成功")
-                return self._state_8()
-            self.log("FAIL", "验证 finished_selected 失败，重试")
-            return self._state_12()
-        self._poll_count += 1
-        if self._poll_count % 20 == 0:
-            self.log("ACT", f"等待孵化中... (已轮询 {self._poll_count} 次)")
-        time.sleep(POLL_INTERVAL)
-        return self._state_7()
