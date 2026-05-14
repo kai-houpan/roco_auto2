@@ -355,18 +355,15 @@ class Automator:
         for attempt in range(MAX_CLICK_RETRIES):
             if self._stop_event.is_set():
                 return "stop"
-            pos = match_template("click.png", DIAGRAM_DIR, self._win_region())
-            if pos is None:
-                self.log("FAIL", "未找到 click.png")
-                time.sleep(POLL_INTERVAL)
-                continue
-            self.log("ACT", f"点击 click @ ({pos[0]}, {pos[1]})")
-            click(pos[0], pos[1])
+            cx = self.win_x + 700
+            cy = self.win_y + 800
+            self.log("ACT", f"点击固定位置 @ ({cx}, {cy})")
+            click(cx, cy)
             verify_pos = match_template("site.png", DIAGRAM_DIR, self._win_region())
             if verify_pos is not None:
                 self.log("OK", "契约完成 (site 验证成功)")
                 return self._state_2()
             self.log("FAIL", f"site 验证失败 (第{attempt + 1}/{MAX_CLICK_RETRIES}次)")
-        self.log("STOP", "click/site 验证失败 (重试耗尽)")
+        self.log("STOP", "site 验证失败 (重试耗尽)")
         return "stop"
 

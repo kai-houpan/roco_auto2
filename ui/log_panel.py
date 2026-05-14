@@ -7,6 +7,7 @@ import threading
 class LogPanel(ttk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
+        self._buffer: list[str] = []
         self._create_widgets()
 
     def _create_widgets(self):
@@ -35,10 +36,14 @@ class LogPanel(ttk.Frame):
     def _write(self, level: str, message: str):
         ts = datetime.now().strftime("%H:%M:%S.%f")[:12]
         line = f"[{ts}] {level:<6} {message}\n"
+        self._buffer.append(line)
         self.text.configure(state="normal")
         self.text.insert(tk.END, line, level)
         self.text.see(tk.END)
         self.text.configure(state="disabled")
+
+    def dump_text(self) -> str:
+        return "".join(self._buffer)
 
     def start(self, message: str):       self._write("START", message)
     def ok(self, message: str):          self._write("OK", message)

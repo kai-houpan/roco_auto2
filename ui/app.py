@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 import os
 
-from config.settings import EGGS_DICT_FILE, GULUS_DICT_FILE, EGGS_DIR, GULUS_DIR
+from config.settings import EGGS_DICT_FILE, GULUS_DICT_FILE, EGGS_DIR, GULUS_DIR, LOGS_DIR
 from config.dictionary_loader import load_eggs, load_gulus, EggEntry, GuluEntry
 from core.automator import Automator
 from ui.control_panel import ControlPanel
@@ -69,7 +69,8 @@ class App:
         gulu_names = [g.name for g in self.gulus]
         self.control = ControlPanel(
             self.root, egg_names, gulu_names,
-            on_start=self._on_start, on_stop=self._on_stop)
+            on_start=self._on_start, on_stop=self._on_stop,
+            on_test=self._on_test_match)
         self.control.pack(fill=tk.X, padx=10, pady=(0, 6))
 
         # Log panel
@@ -106,11 +107,73 @@ class App:
             self._log("WARN", "用户请求停止...")
             self.automator.stop()
 
+    def _on_test_match(self):
+        from core.recognizer import match_template_raw
+        from config.settings import DIAGRAM_DIR, EGGS_DIR, GULUS_DIR, MATCH_THRESHOLD, WINDOW_MATCH_THRESHOLD
+
+        self._log("START", "=== 开始匹配度测试 ===")
+
+        templates = []
+
+        # All diagram PNGs
+        if os.path.isdir(DIAGRAM_DIR):
+            for f in sorted(os.listdir(DIAGRAM_DIR)):
+                if f.lower().endswith(".png"):
+                    templates.append((f, DIAGRAM_DIR))
+
+        # Selected egg
+        egg_name = self.control.selected_egg_name()
+        egg = next((e for e in self.eggs if e.name == egg_name), None)
+        if egg is not None:
+            templates.append((egg.image, EGGS_DIR))
+            templates.append((egg.selected, EGGS_DIR))
+
+        # Selected gulu
+        gulu_name = self.control.selected_gulu_name()
+        gulu = next((g for g in self.gulus if g.name == gulu_name), None)
+        if gulu is not None:
+            templates.append((gulu.image, GULUS_DIR))
+            templates.append((gulu.selected, GULUS_DIR))
+
+        results = []
+        for name, directory in templates:
+            try:
+                cx, cy, conf = match_template_raw(name, directory)
+                results.append((name, conf, cx, cy))
+            except FileNotFoundError:
+                self._log("FAIL", f"文件不存在: {directory}/{name}")
+
+        results.sort(key=lambda r: r[1], reverse=True)
+
+        for name, conf, cx, cy in results:
+            if conf >= MATCH_THRESHOLD:
+                tag = "OK"
+            elif conf >= WINDOW_MATCH_THRESHOLD:
+                tag = "WARN"
+            else:
+                tag = "FAIL"
+            self._log(tag, f"{name}: {conf:.4f} — ({cx}, {cy})")
+
+        self._log("START", "=== 匹配度测试完成 ===")
+
     def _on_automator_stopped(self):
         self.root.after(0, self._handle_stopped)
 
     def _handle_stopped(self):
         self.control.set_running(False)
+        self._dump_log_to_file()
+
+    def _dump_log_to_file(self):
+        from datetime import datetime
+        text = self.log_panel.dump_text()
+        if not text:
+            return
+        os.makedirs(LOGS_DIR, exist_ok=True)
+        filename = datetime.now().strftime("%Y%m%d_%H%M%S") + ".log"
+        filepath = os.path.join(LOGS_DIR, filename)
+        with open(filepath, "w", encoding="utf-8") as f:
+            f.write(text)
+        self._log("START", f"日志已保存: {filepath}")
 
     def _on_close(self):
         if self.automator and self.automator.is_running():

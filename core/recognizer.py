@@ -10,6 +10,33 @@ def _grab_screen(region: tuple[int, int, int, int] | None = None):
     return cv2.cvtColor(np.array(img), cv2.COLOR_RGB2BGR)
 
 
+def match_template_raw(
+    template_name: str,
+    template_dir: str,
+    region: tuple[int, int, int, int] | None = None,
+) -> tuple[int, int, float]:
+    """
+    Template matching without threshold gating.
+    Returns (center_x, center_y, confidence).
+    """
+    template_path = f"{template_dir}/{template_name}"
+    template = cv2.imread(template_path)
+    if template is None:
+        raise FileNotFoundError(f"无法读取模板图像: {template_path}")
+
+    screen = _grab_screen(region)
+    result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
+    _, max_val, _, max_loc = cv2.minMaxLoc(result)
+
+    h, w = template.shape[:2]
+    offset_x = region[0] if region else 0
+    offset_y = region[1] if region else 0
+
+    center_x = max_loc[0] + offset_x + w // 2
+    center_y = max_loc[1] + offset_y + h // 2
+    return center_x, center_y, max_val
+
+
 def match_template(
     template_name: str,
     template_dir: str,
@@ -20,28 +47,10 @@ def match_template(
     Full-screen (or region) template matching.
     Returns (center_x, center_y) of the best match, or None.
     """
-    template_path = f"{template_dir}/{template_name}"
-    template = cv2.imread(template_path)
-    if template is None:
-        raise FileNotFoundError(f"无法读取模板图像: {template_path}")
-
-    screen = _grab_screen(region)
-
-    result = cv2.matchTemplate(screen, template, cv2.TM_CCOEFF_NORMED)
-    _, max_val, _, max_loc = cv2.minMaxLoc(result)
-
-    if max_val < threshold:
+    cx, cy, conf = match_template_raw(template_name, template_dir, region)
+    if conf < threshold:
         return None
-
-    h, w = template.shape[:2]
-    if region:
-        offset_x, offset_y = region[0], region[1]
-    else:
-        offset_x, offset_y = 0, 0
-
-    center_x = max_loc[0] + offset_x + w // 2
-    center_y = max_loc[1] + offset_y + h // 2
-    return center_x, center_y
+    return cx, cy
 
 
 def match_template_in_window(

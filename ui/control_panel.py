@@ -4,12 +4,13 @@ from tkinter import ttk
 
 class ControlPanel(ttk.Frame):
     def __init__(self, parent, egg_names: list[str], gulu_names: list[str],
-                 on_start, on_stop):
+                 on_start, on_stop, on_test):
         super().__init__(parent)
         self.egg_names = egg_names
         self.gulu_names = gulu_names
         self._on_start = on_start
         self._on_stop = on_stop
+        self._on_test = on_test
         self._running = False
         self._create_widgets()
 
@@ -41,6 +42,9 @@ class ControlPanel(ttk.Frame):
         self.stop_btn.pack(side=tk.LEFT, padx=4)
         self.stop_btn.configure(state="disabled")
 
+        self.test_btn = ttk.Button(btn_frame, text="🔍 测试匹配", command=self._on_test)
+        self.test_btn.pack(side=tk.LEFT, padx=4)
+
         # Status
         self.status_var = tk.StringVar(value="● 已停止")
         status_lbl = ttk.Label(self, textvariable=self.status_var)
@@ -64,12 +68,14 @@ class ControlPanel(ttk.Frame):
         if running:
             self.start_btn.configure(state="disabled")
             self.stop_btn.configure(state="normal")
+            self.test_btn.configure(state="disabled")
             self.egg_combo.configure(state="disabled")
             self.gulu_combo.configure(state="disabled")
             self.status_var.set("● 运行中")
         else:
             self.start_btn.configure(state="normal")
             self.stop_btn.configure(state="disabled")
+            self.test_btn.configure(state="normal")
             self.egg_combo.configure(state="readonly")
             self.gulu_combo.configure(state="readonly")
             self.status_var.set("● 已停止")
