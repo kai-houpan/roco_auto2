@@ -36,10 +36,13 @@ class App:
                          fieldbackground="white")
         style.configure("TLabel", background="white", foreground="black")
         style.configure("TFrame", background="white")
-        style.configure("Gray.TFrame", background="#F5F6FA")
-        style.configure("Blue.TFrame", background=self.ACCENT)
-        style.configure("Blue.TLabel", background=self.ACCENT,
-                        foreground="white")
+
+        # Buttons — white with visible border
+        style.configure("TButton", background="white", foreground="black",
+                         borderwidth=2, relief="raised")
+        style.map("TButton",
+                  background=[("active", "#E8E8E8"), ("disabled", "#F5F5F5")],
+                  relief=[("pressed", "sunken")])
 
         # Combobox
         style.configure("TCombobox",
@@ -59,12 +62,10 @@ class App:
             raise SystemExit(str(e))
 
     def _create_widgets(self):
-        # Title bar
-        title_frame = ttk.Frame(self.root, style="Blue.TFrame")
-        title_frame.pack(fill=tk.X)
-        title = ttk.Label(title_frame, text="洛克王国自动孵蛋工具",
-                          font=("", 14, "bold"), style="Blue.TLabel")
-        title.pack(pady=(10, 8))
+        # Title
+        title = ttk.Label(self.root, text="洛克王国自动孵蛋工具",
+                          font=("", 14, "bold"))
+        title.pack(pady=(10, 6))
 
         # Control panel
         config_names = list(_cfg.SCREEN_CONFIGS.keys())
@@ -73,13 +74,8 @@ class App:
         self.control = ControlPanel(
             self.root, egg_names, gulu_names, config_names,
             on_start=self._on_start, on_stop=self._on_stop,
-            on_test=self._on_test_match, on_config_change=self._on_config_change,
-            accent=self.ACCENT)
-        self.control.pack(fill=tk.X, padx=10, pady=(8, 0))
-
-        # Separator
-        sep = tk.Frame(self.root, height=1, bg=self.ACCENT)
-        sep.pack(fill=tk.X, padx=10, pady=(6, 0))
+            on_test=self._on_test_match, on_config_change=self._on_config_change)
+        self.control.pack(fill=tk.X, padx=10, pady=(0, 6))
 
         # Footer (pack before LogPanel so it claims space first)
         footer_frame = ttk.Frame(self.root)
@@ -101,7 +97,7 @@ class App:
 
         # Log panel
         self.log_panel = LogPanel(self.root)
-        self.log_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=(2, 6))
+        self.log_panel.pack(fill=tk.BOTH, expand=True, padx=10, pady=(0, 6))
 
     # ------------------------------------------------------------------
     # Thread-safe logging
