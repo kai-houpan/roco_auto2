@@ -1,0 +1,14 @@
+|咕噜球的名称|图像|检验图像|
+|普通咕噜球|putong_gulu.png|putong_gulu_selected.png|
+|高级咕噜球|gaoji_gulu.png|gaoji_gulu_selected.png|
+|国王球|guowang_gulu.png|guowang_gulu_selected.png|
+|美妙球|meimiao_gulu.png|meimiao_gulu_selected.png|
+|好战球|haozhan_gulu.png|haozhan_gulu_selected.png|
+|光合球|guanghe_gulu.png|guanghe_gulu_selected.png|
+|网兜球|wangdou_gulu.png|wangdou_gulu_selected.png|
+|暗星球|anxing_gulu.png|anxing_gulu_selected.png|
+|调温球|tiaowen_gulu.png|tiaowen_gulu_selected.png|
+|绝缘球|jueyuan_gulu.png|jueyuan_gulu_selected.png|
+|淘沙球|taosha_gulu.png|taosha_gulu_selected.png|
+|变幻球|bianhuan_gulu.png|bianhuan_gulu_selected.png|
+|捕光球|buguang_gulu.png|buguang_gulu_selected.png|

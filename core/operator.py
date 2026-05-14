@@ -2,7 +2,7 @@ import ctypes
 import os
 import time
 
-from config.settings import CLICK_WAIT, SCROLL_WAIT, SCREEN_W, SCREEN_H, WHEEL_DELTA, MOVE_DELAY, ROOT
+from config import settings as _cfg
 
 # ---------------------------------------------------------------------------
 # Interception constants
@@ -37,7 +37,7 @@ class InterceptionDriver:
     """纯输出模式：只注入事件，不拦截物理鼠标。"""
 
     def __init__(self):
-        dll_path = os.path.join(ROOT, "interception.dll")
+        dll_path = os.path.join(_cfg.ROOT, "interception.dll")
         try:
             self._dll = ctypes.WinDLL(dll_path)
         except OSError as e:
@@ -70,8 +70,8 @@ class InterceptionDriver:
     def move_to(self, x: int, y: int) -> None:
         stroke = _MouseStroke()
         stroke.flags = MOUSE_MOVE_ABSOLUTE
-        stroke.x = int(x * 0xFFFF / SCREEN_W)
-        stroke.y = int(y * 0xFFFF / SCREEN_H)
+        stroke.x = int(x * 0xFFFF / _cfg.SCREEN_W)
+        stroke.y = int(y * 0xFFFF / _cfg.SCREEN_H)
         self._dll.interception_send(self._context, MOUSE_DEVICE_ID, ctypes.byref(stroke), 1)
 
     def left_down(self) -> None:
@@ -87,7 +87,7 @@ class InterceptionDriver:
     def scroll(self, clicks: int) -> None:
         stroke = _MouseStroke()
         stroke.state = MOUSE_WHEEL
-        stroke.rolling = clicks * WHEEL_DELTA
+        stroke.rolling = clicks * _cfg.WHEEL_DELTA
         self._dll.interception_send(self._context, MOUSE_DEVICE_ID, ctypes.byref(stroke), 1)
 
 
@@ -106,14 +106,22 @@ def click(x: int, y: int, move_duration: float = 0.15) -> None:
     d.move_to(x, y)
     time.sleep(move_duration)
     d.left_down()
-    time.sleep(MOVE_DELAY)
+    time.sleep(_cfg.MOVE_DELAY)
     d.left_up()
-    time.sleep(CLICK_WAIT)
+    time.sleep(_cfg.CLICK_WAIT)
 
 
 def scroll_at(x: int, y: int, clicks: int) -> None:
     d = _get_driver()
     d.move_to(x, y)
-    time.sleep(MOVE_DELAY)
+    time.sleep(_cfg.MOVE_DELAY)
     d.scroll(-clicks)  # negative = scroll down
-    time.sleep(SCROLL_WAIT)
+    time.sleep(_cfg.SCROLL_WAIT)
+
+
+def scroll_up_at(x: int, y: int, clicks: int) -> None:
+    d = _get_driver()
+    d.move_to(x, y)
+    time.sleep(_cfg.MOVE_DELAY)
+    d.scroll(clicks)  # positive = scroll up
+    time.sleep(_cfg.SCROLL_WAIT)

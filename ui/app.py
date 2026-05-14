@@ -4,7 +4,7 @@ import os
 import time
 import threading
 
-from config.settings import EGGS_DICT_FILE, GULUS_DICT_FILE, EGGS_DIR, GULUS_DIR, LOGS_DIR
+from config import settings as _cfg
 from config.dictionary_loader import load_eggs, load_gulus, EggEntry, GuluEntry
 from core.automator import Automator
 from ui.control_panel import ControlPanel
@@ -54,8 +54,8 @@ class App:
 
     def _load_dictionaries(self):
         try:
-            self.eggs = load_eggs(EGGS_DICT_FILE, EGGS_DIR)
-            self.gulus = load_gulus(GULUS_DICT_FILE, GULUS_DIR)
+            self.eggs = load_eggs(_cfg.EGGS_DICT_FILE, _cfg.EGGS_DIR)
+            self.gulus = load_gulus(_cfg.GULUS_DICT_FILE, _cfg.GULUS_DIR)
         except (FileNotFoundError, ValueError) as e:
             messagebox.showerror("启动失败", str(e))
             raise SystemExit(str(e))
@@ -67,12 +67,13 @@ class App:
         title.pack(pady=(10, 6))
 
         # Control panel
+        config_names = list(_cfg.SCREEN_CONFIGS.keys())
         egg_names = [e.name for e in self.eggs]
         gulu_names = [g.name for g in self.gulus]
         self.control = ControlPanel(
-            self.root, egg_names, gulu_names,
+            self.root, egg_names, gulu_names, config_names,
             on_start=self._on_start, on_stop=self._on_stop,
-            on_test=self._on_test_match)
+            on_test=self._on_test_match, on_config_change=self._on_config_change)
         self.control.pack(fill=tk.X, padx=10, pady=(0, 6))
 
         # Log panel
@@ -93,15 +94,18 @@ class App:
     # ------------------------------------------------------------------
     # Start / Stop
     # ------------------------------------------------------------------
-    def _on_start(self, egg_name: str, gulu_name: str):
-        egg = next((e for e in self.eggs if e.name == egg_name), None)
+    def _on_start(self, egg_names: list[str], gulu_name: str):
+        eggs = [next((e for e in self.eggs if e.name == n), None) for n in egg_names]
+        if any(e is None for e in eggs):
+            messagebox.showerror("错误", "队列中包含无效蛋种")
+            return
         gulu = next((g for g in self.gulus if g.name == gulu_name), None)
-        if egg is None or gulu is None:
-            messagebox.showerror("错误", "请选择有效的蛋和咕噜球")
+        if gulu is None:
+            messagebox.showerror("错误", "请选择有效的咕噜球")
             return
 
         self.control.set_running(True)
-        self.automator = Automator(egg, gulu, self._log, self._on_automator_stopped)
+        self.automator = Automator(eggs, gulu, self._log, self._on_automator_stopped)
         self.automator.start()
 
     def _on_stop(self):
@@ -111,31 +115,30 @@ class App:
 
     def _on_test_match(self):
         from core.recognizer import match_template_raw
-        from config.settings import DIAGRAM_DIR, EGGS_DIR, GULUS_DIR, MATCH_THRESHOLD, WINDOW_MATCH_THRESHOLD
 
         self._log("START", "=== 开始匹配度测试 ===")
 
         templates = []
 
         # All diagram PNGs
-        if os.path.isdir(DIAGRAM_DIR):
-            for f in sorted(os.listdir(DIAGRAM_DIR)):
+        if os.path.isdir(_cfg.DIAGRAM_DIR):
+            for f in sorted(os.listdir(_cfg.DIAGRAM_DIR)):
                 if f.lower().endswith(".png"):
-                    templates.append((f, DIAGRAM_DIR))
+                    templates.append((f, _cfg.DIAGRAM_DIR))
 
         # Selected egg
         egg_name = self.control.selected_egg_name()
         egg = next((e for e in self.eggs if e.name == egg_name), None)
         if egg is not None:
-            templates.append((egg.image, EGGS_DIR))
-            templates.append((egg.selected, EGGS_DIR))
+            templates.append((egg.image, _cfg.EGGS_DIR))
+            templates.append((egg.selected, _cfg.EGGS_DIR))
 
         # Selected gulu
         gulu_name = self.control.selected_gulu_name()
         gulu = next((g for g in self.gulus if g.name == gulu_name), None)
         if gulu is not None:
-            templates.append((gulu.image, GULUS_DIR))
-            templates.append((gulu.selected, GULUS_DIR))
+            templates.append((gulu.image, _cfg.GULUS_DIR))
+            templates.append((gulu.selected, _cfg.GULUS_DIR))
 
         results = []
         for name, directory in templates:
@@ -148,15 +151,24 @@ class App:
         results.sort(key=lambda r: r[1], reverse=True)
 
         for name, conf, cx, cy in results:
-            if conf >= MATCH_THRESHOLD:
+            if conf >= _cfg.MATCH_THRESHOLD:
                 tag = "OK"
-            elif conf >= WINDOW_MATCH_THRESHOLD:
+            elif conf >= _cfg.WINDOW_MATCH_THRESHOLD:
                 tag = "WARN"
             else:
                 tag = "FAIL"
             self._log(tag, f"{name}: {conf:.4f} — ({cx}, {cy})")
 
         self._log("START", "=== 匹配度测试完成 ===")
+
+    def _on_config_change(self, name: str):
+        if not _cfg.activate_config(name):
+            return
+        self._load_dictionaries()
+        egg_names = [e.name for e in self.eggs]
+        gulu_names = [g.name for g in self.gulus]
+        self.control.refresh_dictionaries(egg_names, gulu_names)
+        self._log("START", f"屏幕设置已切换: {name}")
 
     def _on_automator_stopped(self):
         self.root.after(0, self._handle_stopped)
@@ -175,7 +187,7 @@ class App:
         if self.automator is None:
             return
         wx, wy = self.automator.win_x, self.automator.win_y
-        cx, cy = wx + 1412, wy + 17
+        cx, cy = wx + _cfg.CLOSE_OFFSET_X, wy + _cfg.CLOSE_OFFSET_Y
         self._log("ACT", f"自动关闭游戏窗口: ({cx}, {cy})")
         click(cx, cy)
         for _ in range(30):
@@ -194,9 +206,9 @@ class App:
         text = self.log_panel.dump_text()
         if not text:
             return
-        os.makedirs(LOGS_DIR, exist_ok=True)
+        os.makedirs(_cfg.LOGS_DIR, exist_ok=True)
         filename = datetime.now().strftime("%Y%m%d_%H%M%S") + ".log"
-        filepath = os.path.join(LOGS_DIR, filename)
+        filepath = os.path.join(_cfg.LOGS_DIR, filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(text)
         self._log("START", f"日志已保存: {filepath}")
