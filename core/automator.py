@@ -10,12 +10,13 @@ from core.window_manager import locate_window
 
 class Automator:
     def __init__(self, egg_queue: list[EggEntry], gulu: GuluEntry,
-                 log_cb, on_stopped_cb):
+                 log_cb, on_stopped_cb, on_queue_remove=None):
         self.egg_queue = egg_queue        # ordered list, never empty
         self.egg_index = 0
         self.gulu = gulu
         self.log = log_cb      # log_cb(level: str, message: str)
         self.on_stopped = on_stopped_cb
+        self.on_queue_remove = on_queue_remove
 
         self._stop_event = threading.Event()
         self._thread = None
@@ -193,14 +194,10 @@ class Automator:
                 self.log("OK", f"找到蛋: {egg.name} ({egg_img})")
                 self.log("ACT", f"点击 {egg_img} @ ({pos[0]}, {pos[1]})")
                 click(pos[0], pos[1])
-                sel_pos = match_template_in_window(
-                    egg_sel, _cfg.EGGS_DIR,
-                    self.win_x, self.win_y, _cfg.GAME_WINDOW_W, _cfg.GAME_WINDOW_H,
-                    threshold=_cfg.MATCH_THRESHOLD_EGG)
+                time.sleep(1.0)
+                sel_pos = self._verify_egg_selected(egg_sel)
                 if sel_pos is not None:
-                    self.log("OK", f"蛋已选中: {egg_sel}")
                     return self._state_5()
-                self.log("FAIL", f"蛋选中验证失败: {egg_sel}")
                 continue
             sx = self.win_x + _cfg.SCROLL_REL_X
             sy = self.win_y + _cfg.SCROLL_REL_Y
@@ -208,15 +205,35 @@ class Automator:
             scroll_at(sx, sy, _cfg.SCROLL_CLICKS)
             self._egg_scroll_total += 1
 
-        self.log("FAIL", f"未找到目标蛋 {egg.name}，尝试下一个")
+        self.log("FAIL", f"未找到目标蛋 {egg.name}，从队列中移除")
         self._rollback_egg_list()
-        self.egg_index += 1
+        del self.egg_queue[self.egg_index]
+        if self.on_queue_remove:
+            self.on_queue_remove(self.egg_index)
         if self.egg_index < len(self.egg_queue):
             next_egg = self._current_egg()
             self.log("ACT", f"切换蛋种: {next_egg.name}")
             return self._state_4()
         self.log("STOP", "队列中所有蛋种均已耗尽")
         return "stop"
+
+    def _verify_egg_selected(self, egg_sel: str):
+        """Verify egg is selected, retrying up to 3 times with 0.5s intervals."""
+        for retry in range(3):
+            sel_pos = match_template_in_window(
+                egg_sel, _cfg.EGGS_DIR,
+                self.win_x, self.win_y, _cfg.GAME_WINDOW_W, _cfg.GAME_WINDOW_H,
+                threshold=_cfg.MATCH_THRESHOLD_EGG)
+            if sel_pos is not None:
+                self.log("OK", f"蛋已选中: {egg_sel}")
+                return sel_pos
+            if retry < 2:
+                self.log("FAIL", f"蛋选中验证失败 ({retry + 1}/3)，重试...")
+                if self._stop_event.is_set():
+                    return None
+                time.sleep(_cfg.POLL_INTERVAL)
+        self.log("FAIL", f"蛋选中验证失败: {egg_sel} (3次重试后放弃)")
+        return None
 
     def _rollback_egg_list(self) -> None:
         if self._egg_scroll_total == 0:

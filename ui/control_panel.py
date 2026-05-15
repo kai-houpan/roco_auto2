@@ -161,6 +161,12 @@ class ControlPanel(ttk.Frame):
         self.queue_listbox.insert(idx + 1, item)
         self.queue_listbox.selection_set(idx + 1)
 
+    def remove_queue_item(self, index: int):
+        """Remove item at index from the listbox (called when automator
+        exhausts an egg)."""
+        if 0 <= index < self.queue_listbox.size():
+            self.queue_listbox.delete(index)
+
     def get_egg_queue(self) -> list[str]:
         """Return the ordered egg name list. Falls back to single dropdown
         selection if queue is empty."""

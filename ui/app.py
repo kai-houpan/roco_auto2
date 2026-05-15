@@ -120,7 +120,8 @@ class App:
             return
 
         self.control.set_running(True)
-        self.automator = Automator(eggs, gulu, self._log, self._on_automator_stopped)
+        self.automator = Automator(eggs, gulu, self._log, self._on_automator_stopped,
+                                   on_queue_remove=self._on_queue_remove)
         self.automator.start()
 
     def _on_stop(self):
@@ -184,6 +185,9 @@ class App:
         gulu_names = [g.name for g in self.gulus]
         self.control.refresh_dictionaries(egg_names, gulu_names)
         self._log("START", f"屏幕设置已切换: {name}")
+
+    def _on_queue_remove(self, index: int):
+        self.root.after(0, self.control.remove_queue_item, index)
 
     def _on_automator_stopped(self):
         self.root.after(0, self._handle_stopped)
