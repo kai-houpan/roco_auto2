@@ -75,6 +75,7 @@ EGGS_DIR = _eggs_dir()
 GULUS_DIR = _gulus_dir()
 EGGS_DICT_FILE = os.path.join(EGGS_DIR, "eggs_dictionary.md")
 GULUS_DICT_FILE = os.path.join(GULUS_DIR, "gulus_dictionary.md")
+ICON_FILE = os.path.join(ROOT, "assets", "reference", "icon", "icon.ico")
 
 # ---- Template Matching ----
 MATCH_THRESHOLD = 0.8

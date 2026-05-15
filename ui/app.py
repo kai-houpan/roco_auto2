@@ -1,3 +1,4 @@
+import ctypes
 import tkinter as tk
 from tkinter import ttk, messagebox
 import os
@@ -14,11 +15,14 @@ from ui.log_panel import LogPanel
 
 class App:
     def __init__(self):
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("roco_auto2")
         self.root = tk.Tk()
         self.root.title("洛克王国自动孵蛋工具")
         self.root.geometry("500x650")
         self.root.configure(bg="white")
         self.root.minsize(400, 500)
+        if os.path.exists(_cfg.ICON_FILE):
+            self.root.iconbitmap(_cfg.ICON_FILE)
 
         self.ACCENT = "#112DA5"  # rgb(17, 45, 165)
         self._style()
