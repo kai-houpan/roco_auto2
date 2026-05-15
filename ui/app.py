@@ -15,7 +15,7 @@ from ui.log_panel import LogPanel
 
 class App:
     def __init__(self):
-        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("roco_auto2")
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("roco_auto")
         self.root = tk.Tk()
         self.root.title("洛克王国自动孵蛋工具")
         self.root.geometry("500x650")

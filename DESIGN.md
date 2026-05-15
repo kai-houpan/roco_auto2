@@ -52,7 +52,7 @@
 ## 4. 项目结构
 
 ```
-roco_auto2/
+roco_auto/
 ├── DESIGN.md                  # 本设计文档
 ├── main.py                    # 程序入口，启动 GUI
 ├── interception.dll           # Interception 内核驱动 (x64, 需自行安装)
