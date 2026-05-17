@@ -4,7 +4,8 @@ from tkinter import ttk
 
 class ControlPanel(ttk.Frame):
     def __init__(self, parent, egg_names: list[str], gulu_names: list[str],
-                 config_names: list[str], on_start, on_stop, on_test, on_config_change):
+                 config_names: list[str], on_start, on_stop, on_test, on_config_change,
+                 on_autoclicker_start=None, on_autoclicker_stop=None):
         super().__init__(parent)
         self.egg_names = egg_names
         self.gulu_names = gulu_names
@@ -13,7 +14,10 @@ class ControlPanel(ttk.Frame):
         self._on_stop = on_stop
         self._on_test = on_test
         self._on_config_change = on_config_change
+        self._on_autoclicker_start = on_autoclicker_start
+        self._on_autoclicker_stop = on_autoclicker_stop
         self._running = False
+        self._autoclicker_running = False
         self.ACCENT = "#112DA5"
         self._create_widgets()
 
@@ -112,6 +116,26 @@ class ControlPanel(ttk.Frame):
             self, text="工作流结束后自动关机", variable=self.auto_shutdown_var)
         self.auto_shutdown_cb.grid(row=13, column=0, sticky="w", padx=4, pady=(0, 2))
 
+        # ---- Auto-clicker ----
+        ttk.Label(self, text="连点器:").grid(
+            row=14, column=0, sticky="w", padx=4, pady=(10, 2))
+
+        aclick_frame = ttk.Frame(self)
+        aclick_frame.grid(row=15, column=0, sticky="w", padx=4, pady=(0, 4))
+
+        self.aclick_start_btn = ttk.Button(aclick_frame, text="▶ 启动连点",
+                                           command=self._do_autoclicker_start)
+        self.aclick_start_btn.pack(side=tk.LEFT, padx=(0, 4))
+
+        self.aclick_stop_btn = ttk.Button(aclick_frame, text="⏹ 停止连点",
+                                          command=self._do_autoclicker_stop)
+        self.aclick_stop_btn.pack(side=tk.LEFT, padx=(0, 4))
+        self.aclick_stop_btn.configure(state="disabled")
+
+        self.autoclicker_status_var = tk.StringVar(value="● 已停止")
+        ttk.Label(self, textvariable=self.autoclicker_status_var).grid(
+            row=16, column=0, sticky="w", padx=4)
+
         self.columnconfigure(0, weight=1)
 
     # ------------------------------------------------------------------
@@ -183,6 +207,20 @@ class ControlPanel(ttk.Frame):
 
     def _do_stop(self):
         self._on_stop()
+
+    def _do_autoclicker_start(self):
+        if self._on_autoclicker_start:
+            self._on_autoclicker_start()
+
+    def _do_autoclicker_stop(self):
+        if self._on_autoclicker_stop:
+            self._on_autoclicker_stop()
+
+    def set_autoclicker_status(self, running: bool):
+        self._autoclicker_running = running
+        self.aclick_start_btn.configure(state="disabled" if running else "normal")
+        self.aclick_stop_btn.configure(state="normal" if running else "disabled")
+        self.autoclicker_status_var.set("● 运行中" if running else "● 已停止")
 
     def set_running(self, running: bool):
         self._running = running

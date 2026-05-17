@@ -8,6 +8,7 @@ import webbrowser
 
 from config import settings as _cfg
 from config.dictionary_loader import load_eggs, load_gulus, EggEntry, GuluEntry
+from core.autoclicker import AutoClicker
 from core.automator import Automator
 from ui.control_panel import ControlPanel
 from ui.log_panel import LogPanel
@@ -30,6 +31,7 @@ class App:
         self._create_widgets()
 
         self.automator: Automator | None = None
+        self.autoclicker = AutoClicker(interval=0.2)
         self.root.protocol("WM_DELETE_WINDOW", self._on_close)
 
     def _style(self):
@@ -78,7 +80,9 @@ class App:
         self.control = ControlPanel(
             self.root, egg_names, gulu_names, config_names,
             on_start=self._on_start, on_stop=self._on_stop,
-            on_test=self._on_test_match, on_config_change=self._on_config_change)
+            on_test=self._on_test_match, on_config_change=self._on_config_change,
+            on_autoclicker_start=self._on_autoclicker_start,
+            on_autoclicker_stop=self._on_autoclicker_stop)
         self.control.pack(fill=tk.X, padx=10, pady=(0, 6))
 
         # Footer (pack before LogPanel so it claims space first)
@@ -132,6 +136,16 @@ class App:
         if self.automator and self.automator.is_running():
             self._log("WARN", "用户请求停止...")
             self.automator.stop()
+
+    def _on_autoclicker_start(self):
+        self.autoclicker.start()
+        self.control.set_autoclicker_status(True)
+        self._log("START", "连点器: 已启动 (200ms)")
+
+    def _on_autoclicker_stop(self):
+        self.autoclicker.stop()
+        self.control.set_autoclicker_status(False)
+        self._log("START", "连点器: 已停止")
 
     def _on_test_match(self):
         from core.recognizer import match_template_raw
@@ -237,6 +251,7 @@ class App:
         self._log("START", f"日志已保存: {filepath}")
 
     def _on_close(self):
+        self.autoclicker.stop()
         if self.automator and self.automator.is_running():
             self.automator.stop()
             self.automator._thread.join(timeout=2)

@@ -111,6 +111,15 @@ def click(x: int, y: int, move_duration: float = 0.15) -> None:
     time.sleep(_cfg.CLICK_WAIT)
 
 
+def click_current() -> None:
+    """Click at the current mouse position without moving."""
+    d = _get_driver()
+    d.left_down()
+    time.sleep(_cfg.MOVE_DELAY)
+    d.left_up()
+    time.sleep(_cfg.CLICK_WAIT)
+
+
 def scroll_at(x: int, y: int, clicks: int) -> None:
     d = _get_driver()
     d.move_to(x, y)
